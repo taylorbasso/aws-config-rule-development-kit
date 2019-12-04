@@ -6,7 +6,8 @@
     "CodeKey": "MFA_ENABLED_RULE.zip",
     "InputParameters": "{}",
     "OptionalParameters": "{}",
-    "SourceEvents": "AWS::IAM::User"
+    "SourceEvents": "AWS::IAM::User",
+    "SourcePeriodic": "One_Hour"
   },
   "Tags": "[]"
 }

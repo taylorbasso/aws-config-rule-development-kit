@@ -37,37 +37,38 @@ CONFIG_ROLE_TIMEOUT_SECONDS = 900
 # Main Code #
 #############
 
+
+def evaluate_user(username, event):
+    iam_client = get_client('iam', event)
+    response = iam_client.list_mfa_devices(UserName=username)
+    if response["MFADevices"]:
+        return "COMPLIANT"
+
+    return "NON_COMPLIANT"
+
+
 def evaluate_compliance(event, configuration_item, valid_rule_parameters):
-    """Form the evaluation(s) to be return to Config Rules
+    if configuration_item:
+        username = configuration_item['resourceName']
+        return evaluate_user(username, event)
+    else:
+        iam_client = get_client('iam', event)
 
-    Return either:
-    None -- when no result needs to be displayed
-    a string -- either COMPLIANT, NON_COMPLIANT or NOT_APPLICABLE
-    a dictionary -- the evaluation dictionary, usually built by build_evaluation_from_config_item()
-    a list of dictionary -- a list of evaluation dictionary , usually built by build_evaluation()
+        users_response = iam_client.list_users()
 
-    Keyword arguments:
-    event -- the event variable given in the lambda handler
-    configuration_item -- the configurationItem dictionary in the invokingEvent
-    valid_rule_parameters -- the output of the evaluate_parameters() representing validated parameters of the Config Rule
+        compliance_results = []
+        for user in users_response['Users']:
+            compliance_type = evaluate_user(user['UserName'], event)
+            compliance_results.append(
+                build_evaluation(
+                    user['UserId'],
+                    compliance_type,
+                    event,
+                    "AWS::IAM::User"
+              )
+          )
 
-    Advanced Notes:
-    1 -- if a resource is deleted and generate a configuration change with ResourceDeleted status, the Boilerplate code will put a NOT_APPLICABLE on this resource automatically.
-    2 -- if a None or a list of dictionary is returned, the old evaluation(s) which are not returned in the new evaluation list are returned as NOT_APPLICABLE by the Boilerplate code
-    3 -- if None or an empty string, list or dict is returned, the Boilerplate code will put a "shadow" evaluation to feedback that the evaluation took place properly
-    """
-
-    ###############################
-    # Add your custom logic here. #
-    ###############################
-    """
-    We are going to check to see if an IAM user has MFA Enabled. In the default IAM::User event, there is not any information
-    on the MFA for the user. We have to use boto to fetch the user and check the MFA. This is all ran in a lambda on User changes
-    or creations.
-    """
-
-
-    return 'NOT_APPLICABLE'
+        return compliance_results
 
 def evaluate_parameters(rule_parameters):
     """Evaluate the rule parameters dictionary validity. Raise a ValueError for invalid parameters.
