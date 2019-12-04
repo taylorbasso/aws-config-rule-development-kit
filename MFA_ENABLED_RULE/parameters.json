@@ -1,0 +1,12 @@
+{
+  "Version": "1.0",
+  "Parameters": {
+    "RuleName": "MFA_ENABLED_RULE",
+    "SourceRuntime": "python3.7",
+    "CodeKey": "MFA_ENABLED_RULE.zip",
+    "InputParameters": "{}",
+    "OptionalParameters": "{}",
+    "SourceEvents": "AWS::IAM::User"
+  },
+  "Tags": "[]"
+}
